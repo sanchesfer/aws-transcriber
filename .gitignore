@@ -1,0 +1,14 @@
+# Ignore Mac/Windows system files
+.DS_Store
+Thumbs.db
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# CRITICAL: Ignore environment variables/secrets
+.env
+.aws/
+credentials.csv
+media/
+transcripts/
