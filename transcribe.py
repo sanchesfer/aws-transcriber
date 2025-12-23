@@ -70,10 +70,15 @@ def transcribe_video(file_path, language_code, multi_mode):
         data = json.loads(response.read())
         
         final_text = ""
+        results = data.get('results', {})
         
-        if 'speaker_labels' in data['results']:
-            segments = data['results']['speaker_labels']['segments']
-            items = data['results']['items']
+        # Safe check: Do we have speaker labels?
+        labels = results.get('speaker_labels')
+        
+        # We only try to use labels if they exist AND are not None
+        if labels is not None and 'segments' in labels:
+            segments = labels['segments']
+            items = results.get('items', [])
             word_map = {item['start_time']: item['alternatives'][0]['content'] 
                        for item in items if 'start_time' in item}
 
@@ -84,8 +89,13 @@ def transcribe_video(file_path, language_code, multi_mode):
                     if item['start_time'] in word_map:
                         segment_words.append(word_map[item['start_time']])
                 final_text += f"{speaker}: {' '.join(segment_words)}\n"
+        
         else:
-            final_text = data['results']['transcripts'][0]['transcript']
+            # Fallback: Just grab the plain text if speaker detection failed or wasn't requested
+            if 'transcripts' in results and len(results['transcripts']) > 0:
+                final_text = results['transcripts'][0]['transcript']
+            else:
+                final_text = "[Error: No transcript text found]"
         
         # --- NEW NAMING LOGIC ---
         base_name = file_name + ".txt"
